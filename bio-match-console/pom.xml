@@ -23,8 +23,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.rongcredit</groupId>
-			<artifactId>commons-utils</artifactId>
-			<version>${commons.version}</version>
+			<artifactId>bio-match-utils</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 </project>
