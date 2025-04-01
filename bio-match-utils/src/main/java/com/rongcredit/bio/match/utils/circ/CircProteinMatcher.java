@@ -58,9 +58,12 @@ public class CircProteinMatcher implements ProteinMatcher {
 			throw new IllegalArgumentException("The DNA/RNA sequence can not be null");
 		}
 		String normalizedSequence = sequence.toUpperCase();
+		CircProtein protein = sequence2ProteinMapCache.get(normalizedSequence);
+		if (protein != null) {
+			return protein;
+		}
 		cacheLock.lock();
 		try {
-			CircProtein protein = sequence2ProteinMapCache.get(normalizedSequence);
 			if (protein == null) {
 				protein = toCirc(normalizedSequence, circLoop);
 				sequence2ProteinMapCache.put(sequence, protein);
@@ -77,7 +80,7 @@ public class CircProteinMatcher implements ProteinMatcher {
 		CircProtein protein = matcher.translate(rna);
 		System.out.println(protein.getProtein());
 		System.out.println(Arrays.toString(protein.getBoundarys().toArray()));
-		matcher.match(null,rna, "VETRDGQIAGGDASER");
+		matcher.match(null, rna, "VETRDGQIAGGDASER");
 	}
 
 	private MatchResult match(final String RNAKey, final String RNA, final String protein) {

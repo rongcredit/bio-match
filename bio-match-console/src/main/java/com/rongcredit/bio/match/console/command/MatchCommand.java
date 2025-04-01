@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.stereotype.Component;
@@ -83,7 +84,9 @@ public class MatchCommand extends AbstractCommand {
 			log.error("Load protein file faild", t);
 			return;
 		}
-		CircProteinMatcher matcher = new CircProteinMatcher();
+		AtomicInteger total = new AtomicInteger(protinData.size());
+		AtomicInteger finished = new AtomicInteger(0);
+		final CircProteinMatcher matcher = new CircProteinMatcher();
 		protinData.entrySet().parallelStream().forEach(proteinEntry -> {
 			String sequence = proteinEntry.getValue();
 			List<MatchResult> results = matcher.match(dnaData, sequence);
@@ -91,8 +94,10 @@ public class MatchCommand extends AbstractCommand {
 				for (MatchResult result : results) {
 					log.info("{} matched to {} at {}", sequence, result.getDnaKey(), result.getIndex());
 				}
-			} else {
-
+			}
+			finished.incrementAndGet();
+			if (finished.get() % 100 == 0) {
+				log.info("remains: {}", total.get() - finished.get());
 			}
 		});
 		log.info("finished");
@@ -149,9 +154,9 @@ public class MatchCommand extends AbstractCommand {
 					}
 					protein = protein.trim();
 					String normalized = protein.replaceAll(pattern1, "").replaceAll(pattern2, "");
-					if (data.containsKey(protein)) {
-						log.warn("duplicated: {}", protein);
-					}
+//					if (data.containsKey(protein)) {
+//						log.warn("duplicated: {}", protein);
+//					}
 					data.put(protein, normalized);
 				}
 
