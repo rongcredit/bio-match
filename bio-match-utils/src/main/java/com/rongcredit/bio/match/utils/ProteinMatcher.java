@@ -12,8 +12,8 @@ public interface ProteinMatcher {
 	 * 
 	 * @param provider RNA sequence provider
 	 * @param protein  protein to match
-	 * @return {@code List<String>} a list of RNA sequence the fulfill the match
+	 * @return {@code List<MatchResult>} a list of RNA sequence the fulfill the match
 	 *         rule
 	 */
-	List<String> match(RNAProvider provider, String protein);
+	List<MatchResult> match(RNAProvider provider, String protein);
 }

@@ -1,8 +1,8 @@
 package com.rongcredit.bio.match.utils;
 
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 
 @SuppressWarnings("serial")
-public class MemoryHashSetRNAProvider extends HashSet<String> implements RNAProvider {
+public class MemoryHashSetRNAProvider extends LinkedHashMap<String,String> implements RNAProvider {
 
 }
