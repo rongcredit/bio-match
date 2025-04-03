@@ -11,4 +11,6 @@ import lombok.Data;
 public class ProteinData implements Serializable {
     @ExcelProperty(index = 2)
     private String protein;
+    @ExcelProperty(index = 7)
+    private String proteinName;
 }

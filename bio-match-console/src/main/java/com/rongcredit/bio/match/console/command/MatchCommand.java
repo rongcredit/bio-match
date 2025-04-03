@@ -20,6 +20,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.read.listener.ReadListener;
 import com.rongcredit.bio.match.console.command.data.DNAData;
 import com.rongcredit.bio.match.console.command.data.ProteinData;
+import com.rongcredit.bio.match.console.config.BioMatchConfig;
 import com.rongcredit.bio.match.utils.MatchResult;
 import com.rongcredit.bio.match.utils.MemoryHashSetRNAProvider;
 import com.rongcredit.bio.match.utils.circ.CircProteinMatcher;
@@ -33,8 +34,10 @@ public class MatchCommand extends AbstractCommand {
 
 	private String pattern1 = "\\(\\+\\d+(\\.\\d+)?\\)";
 	private String pattern2 = "(\\[(\\w|-)+\\]|\\.)";
+	private final BioMatchConfig bioMatchConfig;
 
-	public MatchCommand() {
+	public MatchCommand(BioMatchConfig bioMatchConfig) {
+		this.bioMatchConfig = bioMatchConfig;
 	}
 
 	@Override
@@ -59,26 +62,29 @@ public class MatchCommand extends AbstractCommand {
 		if (!match) {
 			return;
 		}
-		String filePath = getString(args, "dna", null);
+		String filePath = getString(args, "dna", bioMatchConfig.getDnaFile());
 		File dnaFile = assertFileExists(filePath);
 		if (dnaFile == null) {
 			log.error("The dna file does not specified or the file can not read: {}", filePath);
 			return;
 		}
 		log.info("The dna file is: {}", filePath);
-		filePath = getString(args, "protein", null);
+		filePath = getString(args, "protein", bioMatchConfig.getProteinFile());
 		File proteinFile = assertFileExists(filePath);
 		if (proteinFile == null) {
 			log.error("The protein file does not specified or the file can not read: {}", filePath);
 			return;
 		}
 		log.info("The protein file is: {}", filePath);
-		String outputPath = getString(args, "output", null);
+		String outputPath = getString(args, "output", bioMatchConfig.getOutputFile());
 		log.info("The output file is: {}", outputPath);
 
-		int circLoop = getInt(args, "circ", 4);
+		int circLoop = getInt(args, "circ", bioMatchConfig.getCircLoop());
 		log.info("The crec loop is: {}", circLoop);
-		final boolean boundary = args.getOptionNames().contains("boundary");
+		boolean boundary = args.getOptionNames().contains("boundary");
+		if (!boundary) {
+			boundary = bioMatchConfig.isBoundary();
+		}
 		log.info("Check Boundary: {}", boundary);
 
 		// Load the dna file data
@@ -210,13 +216,17 @@ public class MatchCommand extends AbstractCommand {
 					if (item == null) {
 						return;
 					}
+					String proteinName = item.getProteinName();
+					if (proteinName == null || proteinName.isBlank()) {
+						return;
+					}
 					String protein = item.getProtein();
 					if (protein == null || protein.isBlank()) {
 						return;
 					}
 					protein = protein.trim();
 					String normalized = protein.replaceAll(pattern1, "").replaceAll(pattern2, "");
-					data.put(protein, normalized);
+					data.put(item.getProteinName() + ":" + protein, normalized);
 				}
 
 				@Override

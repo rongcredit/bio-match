@@ -1,3 +1,15 @@
 spring:
   main:
     banner-mode: off    
+bio-match:
+  # define the circ loop count
+  circLoop: 4
+  # if enable boundary check set true, otherwise set false
+  boundary: true
+  # set dna file path
+  dnaFile: "./sample/CircRNA序列.xlsx"
+  # set protein file path
+  proteinFile: "./sample/质谱检测到的肽段-peptide1.xlsx"
+  # set the output file path
+  outputFile: "./output.txt"
+  
