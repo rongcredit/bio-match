@@ -4,8 +4,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.rongcredit</groupId>
-		<artifactId>commons</artifactId>
-		<version>3.2.4-SNAPSHOT</version>
+		<artifactId>flowx</artifactId>
+		<version>3.2.5</version>
 	</parent>
 	<artifactId>bio-match</artifactId>
 	<version>1.0.1-SNAPSHOT</version>
@@ -14,7 +14,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.javadoc.skip>true</maven.javadoc.skip>
 		<maven.source.skip>true</maven.source.skip>
-		<commons.version>3.2.4-SNAPSHOT</commons.version>
+		<flowx.version>3.2.5</flowx.version>
 	</properties>
 	<build>
 		<plugins>

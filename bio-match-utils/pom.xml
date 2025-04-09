@@ -18,8 +18,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.rongcredit</groupId>
-			<artifactId>commons-utils</artifactId>
-			<version>${commons.version}</version>
+			<artifactId>flowx-utils</artifactId>
+			<version>${flowx.version}</version>
 		</dependency>
 	</dependencies>
 </project>

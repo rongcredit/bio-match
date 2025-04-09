@@ -24,7 +24,7 @@ import com.rongcredit.bio.match.console.config.BioMatchConfig;
 import com.rongcredit.bio.match.utils.MatchResult;
 import com.rongcredit.bio.match.utils.MemoryHashSetRNAProvider;
 import com.rongcredit.bio.match.utils.circ.CircProteinMatcher;
-import com.rongcredit.commons.utils.commands.AbstractCommand;
+import com.rongcredit.flowx.utils.commands.AbstractCommand;
 
 import lombok.extern.slf4j.Slf4j;
 
