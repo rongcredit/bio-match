@@ -96,6 +96,7 @@ public class CircProteinMatcher implements ProteinMatcher {
 
 	private MatchResult match(final String key, final String RNA, final String protein) {
 		// cache the RNA
+		int x = RNA == null || RNA.isBlank() ? 0 : RNA.length() % 3;
 		CircProtein circProtein = translate(RNA);
 		String target = circProtein.getProtein();
 		List<Integer> boundarys = circProtein.getBoundarys();
@@ -103,7 +104,8 @@ public class CircProteinMatcher implements ProteinMatcher {
 		final int pl = protein.length();
 		Integer matchedBoundary = null;
 		Integer matchedIndex = null;
-		for (int fromIndex = 0; fromIndex < target.length(); fromIndex++) {
+
+		for (int fromIndex = (x == 0 ? 1 : 0); fromIndex < target.length(); fromIndex++) {
 			int index = target.indexOf(protein, fromIndex);
 			if (index == -1) {
 				break;
