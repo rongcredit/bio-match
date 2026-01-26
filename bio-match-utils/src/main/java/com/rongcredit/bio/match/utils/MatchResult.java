@@ -8,9 +8,12 @@ import lombok.Data;
 @SuppressWarnings("serial")
 public class MatchResult implements Serializable {
 
-	private String dnaKey;
-	private String dnaSequence;
-	private String protein;
-	private Integer index;
-	private Integer boundary;
+    private String dnaKey;
+
+    private String targetProtein;
+    private Integer targetIndex;
+
+    private String protein;
+    private Integer index;
+    private Integer boundary;
 }

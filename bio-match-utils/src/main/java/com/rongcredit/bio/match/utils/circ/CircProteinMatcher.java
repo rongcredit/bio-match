@@ -66,25 +66,25 @@ public class CircProteinMatcher implements ProteinMatcher {
 
     public static void main(String[] args) {
         CircProteinMatcher matcher = new CircProteinMatcher(true);
-        final String rna = "GATTCGTCAGGAACAGGACATTTCACCTCAGGAGTGCGGGTCTTCCGACCCCGAACTCCACCGGAGGCAATTGCACTGTGTAGCCGTCTGCTGGAGTATACACCAACTGCCCGACTAACACCACTGGAAGCTTGTGCACATTCATTTTTTGATGAATTACGGGACCCAAATGTCAAACTACCAAATGGGCGAGACACACCTGCACTCTTCAACTTCACCACTCAAGAACTGTCAAGTAATCCACCTCTGGCTACCATCCTTATTCCTCCTCATGCTCGGATTCAAGCAGCTGCTTCAACCCCCACAAATGCCACAGCAGCGTCAG";
+        final String rna = "TGAATGGTAGTGTCTAGAAAGGGTATGTCCCTTCAAGAGAGAGGTGCCAATGTCCAACCGGCCTAATAACAATCCAGGGGGGTCACTGCGACGTTCACAGAGGAACACTGCCGGGGCCCAACCACAAGACGACTCAATAGGAGGAAGAAGCTGCAGTTCATCATCTGCTGTGATAGTTCCACAACCAGAGGATCCAGACAGAGCCAATACTTCAGAAAGACAAAAAACGGGGCAGGTGCCTAAGAAAGACAATTCTCGAGGAGTGAAGCGCAGTGCTAGTCCAGACTACAACAGGACCAATTCTCCTAGCTCTGCAAAAAAACCAAAAGCACTTCAGCATACTGAATCTCCCTCAGAAACAAATAAGCCACATAGTAAGTCAAAGAAGAGACATTTAGACCAGGAGCAACAACTGAAATCTGCACAATCACCATCAACAAGCAAGGCTCATACCAGGAAGAGTGGGGCCACTGGCGGTTCACGGAGTCAGAAAAGAAAAAGGACAGAGAGTTCTTGTGTAAAGAGTGGCTCCGGGTCTGAATCAACTGGTGCAGAAGAGAGATCTGCGAAACCTACCAAGCTGGCTTCAAAATCAGCCACCTCAGCCAAAGCTGGGTGTAGCACCATCACTGATTCTTCTTCTGCTGCCTCTACTTCCTCCTCGTCTTCTGCTGTAGCCTCGGCCTCCTCCACTGTACCACCAGGTGCCAGAGTGAAACAAGGAAAAGATCAGAACAAGGCCAGGCGTTCCCGTTCAGCGTCCAGTCCCAGCCCCAGAAGAAGTAGCAGGGAAAAGGAACAGAGTAAAACTGGTGGCTCTTCAAAATTTGATTGGGCTGCTCGTTTCAGCCCTAAAGTTAGCCTTCCTAAAACAAAACTGTCTCTTCCAGGGTCTTCTAAGTCAGAGACATCAAAACCTGGACCTTCTGGATTACAGGCCAAATTAGCAAGTTTAAGAAAATCTACGAAGAAACGCAGTGAGTCTCCACCTGCTGAGCTCCCCAGTTTGAGGCGGAGCACACGCCAAAAGACCACGGGCTCCTGTGCTAGTACCAG";
         CircProtein protein = matcher.translate(rna);
         for (String p : protein.getProteins()) {
             System.out.println(p);
         }
 
         System.out.println(Arrays.toString(protein.getBoundarys().toArray()));
-        List<MatchResult> results1 = matcher.match(null, rna, "TAAS");
+        List<MatchResult> results1 = matcher.match(null, rna, "ALQHTESPSETNKPHSK");
         if (results1 != null) {
             for (MatchResult results : results1) {
                 System.out.println(results.toString());
             }
         }
-        List<MatchResult> results2 = matcher.match(null, rna, "SGFVRNRTF");
-        if (results2 != null) {
-            for (MatchResult results : results2) {
-                System.out.println(results.toString());
-            }
-        }
+        // List<MatchResult> results2 = matcher.match(null, rna, "SGFVRNRTF");
+        // if (results2 != null) {
+        // for (MatchResult results : results2) {
+        // System.out.println(results.toString());
+        // }
+        // }
         // List<MatchResult> results2 = matcher.match(null, rna, "NATAASGFVRNRTF");
         // if (results2 != null) {
         // for (MatchResult results : results2) {
@@ -102,9 +102,12 @@ public class CircProteinMatcher implements ProteinMatcher {
         // do match
         final int pl = protein.length();
         List<MatchResult> results = new ArrayList<>();
+        int targetIndex = 0;
         for (String target : targets) {
+
             Integer matchedBoundary = null;
             Integer matchedIndex = null;
+
             for (int fromIndex = 0; fromIndex < target.length(); fromIndex++) {
                 int index = target.indexOf(protein, fromIndex);
                 if (index == -1) {
@@ -115,7 +118,7 @@ public class CircProteinMatcher implements ProteinMatcher {
                 if (checkBoundary) {
                     for (Integer boundary : boundarys) {
                         if (x) {
-                            if ((index <= boundary - 2)) {
+                            if ((index <= boundary - 2) && ((index + pl) >= boundary)) {
                                 matchedBoundary = boundary;
                                 break;
                             }
@@ -136,19 +139,18 @@ public class CircProteinMatcher implements ProteinMatcher {
                 }
             }
 
-            if (matchedIndex != null) {
-                // System.out.print(String.format("%d, %d", matchedIndex, matchedBoundary));
-            }
             MatchResult result = null;
             if (matchedIndex != null) {
                 result = new MatchResult();
                 result.setDnaKey(key);
-                result.setDnaSequence(RNA);
+                result.setTargetProtein(target);
+                result.setTargetIndex(targetIndex);
                 result.setIndex(matchedIndex);
                 result.setBoundary(matchedBoundary);
                 result.setProtein(protein);
                 results.add(result);
             }
+            targetIndex++;
         }
         return results.isEmpty() ? null : results;
     }
