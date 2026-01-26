@@ -10,8 +10,11 @@ import lombok.Data;
 @Component
 public class BioMatchConfig {
 
-	private boolean boundary = false;
-	private String dnaFile;
-	private String proteinFile;
-	private String outputFile = "./output.txt";
+    private boolean boundary = false;
+    private Integer left = 1;
+    private Integer right = 1;
+    private boolean include = false;
+    private String dnaFile;
+    private String proteinFile;
+    private String outputFile = "./output.txt";
 }

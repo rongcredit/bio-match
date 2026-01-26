@@ -66,14 +66,14 @@ public class CircProteinMatcher implements ProteinMatcher {
 
     public static void main(String[] args) {
         CircProteinMatcher matcher = new CircProteinMatcher(true);
-        final String rna = "TGAATGGTAGTGTCTAGAAAGGGTATGTCCCTTCAAGAGAGAGGTGCCAATGTCCAACCGGCCTAATAACAATCCAGGGGGGTCACTGCGACGTTCACAGAGGAACACTGCCGGGGCCCAACCACAAGACGACTCAATAGGAGGAAGAAGCTGCAGTTCATCATCTGCTGTGATAGTTCCACAACCAGAGGATCCAGACAGAGCCAATACTTCAGAAAGACAAAAAACGGGGCAGGTGCCTAAGAAAGACAATTCTCGAGGAGTGAAGCGCAGTGCTAGTCCAGACTACAACAGGACCAATTCTCCTAGCTCTGCAAAAAAACCAAAAGCACTTCAGCATACTGAATCTCCCTCAGAAACAAATAAGCCACATAGTAAGTCAAAGAAGAGACATTTAGACCAGGAGCAACAACTGAAATCTGCACAATCACCATCAACAAGCAAGGCTCATACCAGGAAGAGTGGGGCCACTGGCGGTTCACGGAGTCAGAAAAGAAAAAGGACAGAGAGTTCTTGTGTAAAGAGTGGCTCCGGGTCTGAATCAACTGGTGCAGAAGAGAGATCTGCGAAACCTACCAAGCTGGCTTCAAAATCAGCCACCTCAGCCAAAGCTGGGTGTAGCACCATCACTGATTCTTCTTCTGCTGCCTCTACTTCCTCCTCGTCTTCTGCTGTAGCCTCGGCCTCCTCCACTGTACCACCAGGTGCCAGAGTGAAACAAGGAAAAGATCAGAACAAGGCCAGGCGTTCCCGTTCAGCGTCCAGTCCCAGCCCCAGAAGAAGTAGCAGGGAAAAGGAACAGAGTAAAACTGGTGGCTCTTCAAAATTTGATTGGGCTGCTCGTTTCAGCCCTAAAGTTAGCCTTCCTAAAACAAAACTGTCTCTTCCAGGGTCTTCTAAGTCAGAGACATCAAAACCTGGACCTTCTGGATTACAGGCCAAATTAGCAAGTTTAAGAAAATCTACGAAGAAACGCAGTGAGTCTCCACCTGCTGAGCTCCCCAGTTTGAGGCGGAGCACACGCCAAAAGACCACGGGCTCCTGTGCTAGTACCAG";
+        final String rna = "GTCTGGGATAAAAGTGAAAGTGGTGATTGGCATTGTACTGCTAGCTGGAAGACACATAGTGGATCTGTATGGCGTGTGACATGGGCCCATCCTGAATTTGGGCAGGTTTTGGCTTCCTGTTCTTTTGACCGAACAGCTGCTGTATGGGAAGAAATAGTAGGAGAATCAAATGATAAACTGCGAGGACAGAGCCACTGGGTTAAAAGGACAACTCTGGTGGATAGCAGAACATCTGTTACTGATGTGAAGTTTGCTCCCAAGCACATGGGTCTTATGTTAGCAACCTGTTCCGCAGATGGTATAGTAAGAATCTATGAGGCACCAGATGTTATGAATCTCAGCCAGTGGTCTTTGCAGCATGAGATCTCATGTAAGCTAAGCTGTAGTTGTATTTCTTGGAACCCTTCAAGCTCTCGTGCTCATTCCCCCATGATCGCCGTAGGAAGTGATGACAGTAGCCCCAACGCAATGGCCAAGGTTCAGATTTTTGAATATAATGAAAACACCAG";
         CircProtein protein = matcher.translate(rna);
         for (String p : protein.getProteins()) {
             System.out.println(p);
         }
 
         System.out.println(Arrays.toString(protein.getBoundarys().toArray()));
-        List<MatchResult> results1 = matcher.match(null, rna, "ALQHTESPSETNKPHSK");
+        List<MatchResult> results1 = matcher.match(null, rna, "VQIFEYNENTR", 1, 1);
         if (results1 != null) {
             for (MatchResult results : results1) {
                 System.out.println(results.toString());
@@ -93,9 +93,10 @@ public class CircProteinMatcher implements ProteinMatcher {
         // }
     }
 
-    private List<MatchResult> match(final String key, final String RNA, final String protein) {
+    private List<MatchResult> match(final String key, final String RNA, final String protein, final int leftOffset,
+            final int rightOffset) {
         // cache the RNA
-        boolean x = (RNA == null || RNA.isBlank() ? 0 : RNA.length() % 3) == 0 ? true : false;
+//        boolean x = (RNA == null || RNA.isBlank() ? 0 : RNA.length() % 3) == 0 ? true : false;
         CircProtein circProtein = translate(RNA);
         List<String> targets = circProtein.getProteins();
         List<Integer> boundarys = circProtein.getBoundarys();
@@ -103,6 +104,8 @@ public class CircProteinMatcher implements ProteinMatcher {
         final int pl = protein.length();
         List<MatchResult> results = new ArrayList<>();
         int targetIndex = 0;
+        int left = leftOffset + 1;
+        int right = rightOffset;
         for (String target : targets) {
 
             Integer matchedBoundary = null;
@@ -117,16 +120,9 @@ public class CircProteinMatcher implements ProteinMatcher {
                 // check boundary
                 if (checkBoundary) {
                     for (Integer boundary : boundarys) {
-                        if (x) {
-                            if ((index <= boundary - 2) && ((index + pl) >= boundary)) {
-                                matchedBoundary = boundary;
-                                break;
-                            }
-                        } else {
-                            if ((index <= boundary) && ((index + pl) >= boundary)) {
-                                matchedBoundary = boundary;
-                                break;
-                            }
+                        if ((index <= boundary - left) && ((index + pl) >= (boundary + right))) {
+                            matchedBoundary = boundary;
+                            break;
                         }
                     }
                     if (matchedBoundary != null) {
@@ -156,7 +152,8 @@ public class CircProteinMatcher implements ProteinMatcher {
     }
 
     @Override
-    public List<MatchResult> match(final RNAProvider provider, final String protein) {
+    public List<MatchResult> match(final RNAProvider provider, final String protein, final int leftOffset,
+            final int rightOffset) {
         if (provider == null || protein == null || protein.isBlank()) {
             return null;
         }
@@ -168,7 +165,7 @@ public class CircProteinMatcher implements ProteinMatcher {
             if (sequence == null || sequence.isBlank()) {
                 return;
             }
-            List<MatchResult> result = match(id, sequence, protein.toUpperCase());
+            List<MatchResult> result = match(id, sequence, protein.toUpperCase(), leftOffset, rightOffset);
             if (result != null) {
                 writeLock.lock();
                 try {

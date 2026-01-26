@@ -7,13 +7,16 @@ import java.util.List;
  */
 public interface ProteinMatcher {
 
-	/**
-	 * Match a protein from the specified RNA sequence provider.
-	 * 
-	 * @param provider RNA sequence provider
-	 * @param protein  protein to match
-	 * @return {@code List<MatchResult>} a list of RNA sequence the fulfill the match
-	 *         rule
-	 */
-	List<MatchResult> match(RNAProvider provider, String protein);
+    /**
+     * Match a protein from the specified RNA sequence provider.
+     * 
+     * @param provider    RNA sequence provider
+     * @param protein     protein to match
+     * @param leftOffset  left offset
+     * @param rightOffset right offset
+     * @return {@code List<MatchResult>} a list of RNA sequence the fulfill the
+     *         match
+     *         rule
+     */
+    List<MatchResult> match(RNAProvider provider, String protein, final int leftOffset, final int rightOffset);
 }

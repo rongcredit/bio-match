@@ -32,8 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MatchCommand extends AbstractCommand {
 
-    private String pattern1 = "\\(\\+\\d+(\\.\\d+)?\\)";
-    private String pattern2 = "(\\[(\\w|-)+\\]|\\.)";
+    private static final String pattern1 = "\\(\\+\\d+(\\.\\d+)?\\)";
+    private static final String pattern2 = "(\\[(\\w|-)+\\]|\\.)";
+    private static final String pattern3 = "(\\[|\\]|\\.)";
     private final BioMatchConfig bioMatchConfig;
 
     public MatchCommand(BioMatchConfig bioMatchConfig) {
@@ -84,6 +85,17 @@ public class MatchCommand extends AbstractCommand {
             boundary = bioMatchConfig.isBoundary();
         }
         log.info("Check Boundary: {}", boundary);
+        boolean include = args.getOptionNames().contains("include");
+        if (!include) {
+            include = bioMatchConfig.isInclude();
+        }
+        log.info("Include Breaks: {}", include);
+
+        int left = getInt(args, "left", bioMatchConfig.getLeft());
+        log.info("Left offset: {}", left);
+
+        int right = getInt(args, "right", bioMatchConfig.getRight());
+        log.info("Right offset: {}", right);
 
         // Load the dna file data
         MemoryHashSetRNAProvider dnaData;
@@ -96,7 +108,7 @@ public class MatchCommand extends AbstractCommand {
         // Load the protein file data
         Map<String, String> protinData;
         try {
-            protinData = loadProtein(proteinFile);
+            protinData = loadProtein(proteinFile, include);
         } catch (Throwable t) {
             log.error("Load protein file faild", t);
             return;
@@ -110,7 +122,7 @@ public class MatchCommand extends AbstractCommand {
             protinData.entrySet().parallelStream().forEach(entry -> {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                List<MatchResult> results = matcher.match(dnaData, value);
+                List<MatchResult> results = matcher.match(dnaData, value, left, right);
                 if (results != null && !results.isEmpty()) {
                     if (writer != null) {
                         outputLock.lock();
@@ -205,7 +217,7 @@ public class MatchCommand extends AbstractCommand {
         return data;
     }
 
-    protected Map<String, String> loadProtein(File proteinFile) throws Throwable {
+    protected Map<String, String> loadProtein(File proteinFile, boolean include) throws Throwable {
         final Map<String, String> data = new TreeMap<>();
         try (FileInputStream inputStream = new FileInputStream(proteinFile)) {
             EasyExcel.read(inputStream, ProteinData.class, new ReadListener<ProteinData>() {
@@ -223,7 +235,12 @@ public class MatchCommand extends AbstractCommand {
                         return;
                     }
                     protein = protein.trim();
-                    String normalized = protein.replaceAll(pattern1, "").replaceAll(pattern2, "");
+                    String normalized = protein.replaceAll(pattern1, "");
+                    if (include) {
+                        normalized = normalized.replaceAll(pattern3, "");
+                    } else {
+                        normalized = normalized.replaceAll(pattern2, "");
+                    }
                     data.put(item.getProteinName() + ":" + protein, normalized);
                 }
 
@@ -238,6 +255,6 @@ public class MatchCommand extends AbstractCommand {
 
     public static void main(String[] args) {
         System.out.println(">hsa_circ_00001".matches("(A|T|C|G)+"));
-        System.out.println("[R].HIADLAGNSEVILPVPAFNVINGGSHAGNK.[L]".replaceAll("(\\[(\\w|-)+\\]|\\.)", ""));
+        System.out.println("[R].HIADLAGNSEVILPVPAFNVINGGSHAGNK.[L]".replaceAll(pattern2, ""));
     }
 }

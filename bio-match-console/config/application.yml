@@ -2,8 +2,12 @@ spring:
   main:
     banner-mode: off    
 bio-match:
-  # define the circ loop count
-  circLoop: 4
+  # define the left offset count
+  left: 1
+  # define the right offset count
+  right: 1
+  # if enable include the content in square brackets 
+  include: true
   # if enable boundary check set true, otherwise set false
   boundary: true
   # set dna file path
