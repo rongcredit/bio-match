@@ -15,157 +15,167 @@ import com.rongcredit.bio.match.utils.TranslateResult;
 
 public class CircProteinMatcher implements ProteinMatcher {
 
-	private Map<String, CircProtein> sequence2ProteinMapCache = new HashMap<>();
-	private final ProteinTranslator proteinTranslator = new ProteinTranslator();
-	private ReentrantLock cacheLock = new ReentrantLock();
-	private final int circLoop;
-	private final boolean checkBoundary;
+    private Map<String, CircProtein> sequence2ProteinMapCache = new HashMap<>();
+    private final ProteinTranslator proteinTranslator = new ProteinTranslator();
+    private ReentrantLock cacheLock = new ReentrantLock();
+    private final boolean checkBoundary;
 
-	public CircProteinMatcher() {
-		this.circLoop = 4;
-		this.checkBoundary = true;
-	}
+    public CircProteinMatcher() {
+        this.checkBoundary = true;
+    }
 
-	public CircProteinMatcher(int circLoop, boolean checkBoundary) {
-		this.circLoop = circLoop;
-		this.checkBoundary = checkBoundary;
-	}
+    public CircProteinMatcher(boolean checkBoundary) {
+        this.checkBoundary = checkBoundary;
+    }
 
-	private CircProtein toCirc(final String sequence, int loop) {
-		StringBuilder builder = new StringBuilder();
-		String remainSeq = null;
-		List<Integer> boundarys = new ArrayList<>();
-		int boundary = 0;
-		for (int i = 0; i < loop; i++) {
-			String subSeq;
-			int length = sequence.length();
-			if (remainSeq != null && !remainSeq.isBlank() && remainSeq.length() < 3) {
-				subSeq = remainSeq + sequence;
-				length -= (3 - remainSeq.length());
-			} else {
-				subSeq = sequence;
-			}
+    private CircProtein toCirc(final String sequence) {
+        List<Integer> boundarys = new ArrayList<>();
+        int boundary = sequence.length() / 3;
+        boundarys.add(boundary);
 
-			TranslateResult translateResult = proteinTranslator.translate(subSeq);
-			String protein = translateResult.getProtein();
-			builder.append(protein);
-			boundary += length / 3;
+        List<String> proteins = new ArrayList<>();
+        for (int beginIndex = 0; beginIndex < 3; beginIndex++) {
+            String subSeq = sequence.substring(beginIndex) + sequence;
+            TranslateResult translateResult = proteinTranslator.translate(subSeq);
+            String protein = translateResult.getProtein();
+            proteins.add(protein);
+        }
+        return new CircProtein(proteins, boundarys);
+    }
 
-			remainSeq = translateResult.getRemainSequence();
-			if (remainSeq != null && !remainSeq.isBlank()) {
-				boundary += 1;
-			}
-			// ignore the last boundary
-			// append boundary
-			if ((i + 1) < loop) {
-				boundarys.add(boundary);
-			}
-		}
-		return new CircProtein(builder.toString(), boundarys);
-	}
+    private CircProtein translate(final String sequence) {
+        if (sequence == null) {
+            throw new IllegalArgumentException("The DNA/RNA sequence can not be null");
+        }
+        String normalizedSequence = sequence.toUpperCase();
+        CircProtein protein = sequence2ProteinMapCache.get(normalizedSequence);
+        if (protein != null) {
+            return protein;
+        }
+        cacheLock.lock();
+        try {
+            if (protein == null) {
+                protein = toCirc(normalizedSequence);
+                sequence2ProteinMapCache.put(sequence, protein);
+            }
+            return protein;
+        } finally {
+            cacheLock.unlock();
+        }
+    }
 
-	private CircProtein translate(final String sequence) {
-		if (sequence == null) {
-			throw new IllegalArgumentException("The DNA/RNA sequence can not be null");
-		}
-		String normalizedSequence = sequence.toUpperCase();
-		CircProtein protein = sequence2ProteinMapCache.get(normalizedSequence);
-		if (protein != null) {
-			return protein;
-		}
-		cacheLock.lock();
-		try {
-			if (protein == null) {
-				protein = toCirc(normalizedSequence, circLoop);
-				sequence2ProteinMapCache.put(sequence, protein);
-			}
-			return protein;
-		} finally {
-			cacheLock.unlock();
-		}
-	}
+    public static void main(String[] args) {
+        CircProteinMatcher matcher = new CircProteinMatcher(true);
+        final String rna = "GATTCGTCAGGAACAGGACATTTCACCTCAGGAGTGCGGGTCTTCCGACCCCGAACTCCACCGGAGGCAATTGCACTGTGTAGCCGTCTGCTGGAGTATACACCAACTGCCCGACTAACACCACTGGAAGCTTGTGCACATTCATTTTTTGATGAATTACGGGACCCAAATGTCAAACTACCAAATGGGCGAGACACACCTGCACTCTTCAACTTCACCACTCAAGAACTGTCAAGTAATCCACCTCTGGCTACCATCCTTATTCCTCCTCATGCTCGGATTCAAGCAGCTGCTTCAACCCCCACAAATGCCACAGCAGCGTCAG";
+        CircProtein protein = matcher.translate(rna);
+        for (String p : protein.getProteins()) {
+            System.out.println(p);
+        }
 
-	public static void main(String[] args) {
-		CircProteinMatcher matcher = new CircProteinMatcher();
-		final String rna = "ATTGCAGGAGGAGATGCTTCAGAGAGAGGAAGCCGAAAACACCCTGCAATCTTTCAGACAGGATGTGATTACAAGGATGACGACGATAAGTGACAATGCGTCTCTGGCACGTCTTGACCTTGAACGCAAAGTGGAATCTTTGCAAGAAGAGATTGCCTTTTTGAAGAAACTCCACGAAGAGGAAATCCAGGAGCTGCAGGCTCAGATTCAGGAACAGCATGTCCAAATCGATGTGGATGTTTCCAAGCCTGACCTCACGGCTGCCCTGCGTGACGTACGTCAGCAATATGAAAGTGTGGCTGCCAAGAACCTGCAGGAGGCAGAAGAATGGTACAAATCCAAGTTTGCTGACCTCTCTGAGGCTGCCAACCGGAACAATGACGCCCTGCGCCAGGCAAAGCAGGAGTCCACTGAGTACCGGAGACAGGTGCAGTCCCTCACCTGTGAAGTGGATGCCCTTAAAGGAACCAATGAGTCCCTGGAACGCCAGATGCGTGAAATGGAAGAGAACTTTGCCGTTGAAGCTGCTAACTACCAAGACACTATTGGCCGCCTGCAGGATGAGATTCAGAATATGAAGGAGGAAATGGCTCGTCACCTTCGTGAATACCAAGACCTGCTCAATGTTAAGATGGCCCTTGACATTGAGATTGCCACCTACAGGAAGCTGCTGGAAGGCGAGGAGAGCAGGATTTCTCTGCCTCTTCCAAACTTTTCCTCCCTGAACCTGAGGGAAACTAATCTGGATTCACTCCCTCTGGTTGATACCCACTCAAAAAGGACACTTCTGATTAAGACGGTTGAAACTAGAGATGGACAG";
-		CircProtein protein = matcher.translate(rna);
-		System.out.println(protein.getProtein());
-		System.out.println(Arrays.toString(protein.getBoundarys().toArray()));
-		matcher.match(null, rna, "VETRDGQIAGGDASER");
-	}
+        System.out.println(Arrays.toString(protein.getBoundarys().toArray()));
+        List<MatchResult> results1 = matcher.match(null, rna, "TAAS");
+        if (results1 != null) {
+            for (MatchResult results : results1) {
+                System.out.println(results.toString());
+            }
+        }
+        List<MatchResult> results2 = matcher.match(null, rna, "SGFVRNRTF");
+        if (results2 != null) {
+            for (MatchResult results : results2) {
+                System.out.println(results.toString());
+            }
+        }
+        // List<MatchResult> results2 = matcher.match(null, rna, "NATAASGFVRNRTF");
+        // if (results2 != null) {
+        // for (MatchResult results : results2) {
+        // System.out.println(results.toString());
+        // }
+        // }
+    }
 
-	private MatchResult match(final String key, final String RNA, final String protein) {
-		// cache the RNA
-		int x = RNA == null || RNA.isBlank() ? 0 : RNA.length() % 3;
-		CircProtein circProtein = translate(RNA);
-		String target = circProtein.getProtein();
-		List<Integer> boundarys = circProtein.getBoundarys();
-		// do match
-		final int pl = protein.length();
-		Integer matchedBoundary = null;
-		Integer matchedIndex = null;
+    private List<MatchResult> match(final String key, final String RNA, final String protein) {
+        // cache the RNA
+        boolean x = (RNA == null || RNA.isBlank() ? 0 : RNA.length() % 3) == 0 ? true : false;
+        CircProtein circProtein = translate(RNA);
+        List<String> targets = circProtein.getProteins();
+        List<Integer> boundarys = circProtein.getBoundarys();
+        // do match
+        final int pl = protein.length();
+        List<MatchResult> results = new ArrayList<>();
+        for (String target : targets) {
+            Integer matchedBoundary = null;
+            Integer matchedIndex = null;
+            for (int fromIndex = 0; fromIndex < target.length(); fromIndex++) {
+                int index = target.indexOf(protein, fromIndex);
+                if (index == -1) {
+                    break;
+                }
+                fromIndex = index + 1;
+                // check boundary
+                if (checkBoundary) {
+                    for (Integer boundary : boundarys) {
+                        if (x) {
+                            if ((index <= boundary - 2)) {
+                                matchedBoundary = boundary;
+                                break;
+                            }
+                        } else {
+                            if ((index <= boundary) && ((index + pl) >= boundary)) {
+                                matchedBoundary = boundary;
+                                break;
+                            }
+                        }
+                    }
+                    if (matchedBoundary != null) {
+                        matchedIndex = index;
+                        break;
+                    }
+                } else {
+                    matchedIndex = index;
+                    break;
+                }
+            }
 
-		for (int fromIndex = (x == 0 ? 1 : 0); fromIndex < target.length(); fromIndex++) {
-			int index = target.indexOf(protein, fromIndex);
-			if (index == -1) {
-				break;
-			}
-			fromIndex = index + 1;
-			// check boundary
-			if (checkBoundary) {
-				for (Integer boundary : boundarys) {
-					if ((index <= boundary - 2) && ((index + pl) >= boundary + 2)) {
-						matchedBoundary = boundary;
-						break;
-					}
-				}
-				if (matchedBoundary != null) {
-					matchedIndex = index;
-					break;
-				}
-			} else {
-				matchedIndex = index;
-				break;
-			}
-		}
-		if (matchedIndex != null) {
-//			System.out.print(String.format("%d, %d", matchedIndex, matchedBoundary));
-		}
-		MatchResult result = null;
-		if (matchedIndex != null) {
-			result = new MatchResult();
-			result.setDnaKey(key);
-			result.setDnaSequence(RNA);
-			result.setIndex(matchedIndex);
-			result.setBoundary(matchedBoundary);
-			result.setProtein(protein);
-		}
-		return result;
-	}
+            if (matchedIndex != null) {
+                // System.out.print(String.format("%d, %d", matchedIndex, matchedBoundary));
+            }
+            MatchResult result = null;
+            if (matchedIndex != null) {
+                result = new MatchResult();
+                result.setDnaKey(key);
+                result.setDnaSequence(RNA);
+                result.setIndex(matchedIndex);
+                result.setBoundary(matchedBoundary);
+                result.setProtein(protein);
+                results.add(result);
+            }
+        }
+        return results.isEmpty() ? null : results;
+    }
 
-	@Override
-	public List<MatchResult> match(final RNAProvider provider, final String protein) {
-		if (provider == null || protein == null || protein.isBlank()) {
-			return null;
-		}
-		List<MatchResult> matchedSequences = new ArrayList<>();
-		ReentrantLock writeLock = new ReentrantLock();
-		provider.entrySet().parallelStream().forEach(entry -> {
-			String id = entry.getKey();
-			String sequence = entry.getValue();
-			if (sequence == null || sequence.isBlank()) {
-				return;
-			}
-			MatchResult result = match(id, sequence, protein.toUpperCase());
-			if (result != null) {
-				writeLock.lock();
-				try {
-					matchedSequences.add(result);
-				} finally {
-					writeLock.unlock();
-				}
-			}
-		});
-		return matchedSequences;
-	}
+    @Override
+    public List<MatchResult> match(final RNAProvider provider, final String protein) {
+        if (provider == null || protein == null || protein.isBlank()) {
+            return null;
+        }
+        List<MatchResult> matchedSequences = new ArrayList<>();
+        ReentrantLock writeLock = new ReentrantLock();
+        provider.entrySet().parallelStream().forEach(entry -> {
+            String id = entry.getKey();
+            String sequence = entry.getValue();
+            if (sequence == null || sequence.isBlank()) {
+                return;
+            }
+            List<MatchResult> result = match(id, sequence, protein.toUpperCase());
+            if (result != null) {
+                writeLock.lock();
+                try {
+                    matchedSequences.addAll(result);
+                } finally {
+                    writeLock.unlock();
+                }
+            }
+        });
+        return matchedSequences;
+    }
 }

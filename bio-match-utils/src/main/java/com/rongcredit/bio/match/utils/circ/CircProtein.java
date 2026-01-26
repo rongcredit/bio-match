@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CircProtein {
 
-	private String protein;
-	private List<Integer> boundarys;
+    private List<String> proteins;
+    private List<Integer> boundarys;
 }

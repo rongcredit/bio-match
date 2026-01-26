@@ -11,7 +11,6 @@ import lombok.Data;
 public class BioMatchConfig {
 
 	private boolean boundary = false;
-	private int circLoop = 4;
 	private String dnaFile;
 	private String proteinFile;
 	private String outputFile = "./output.txt";
