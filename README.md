@@ -3,7 +3,8 @@
 ## 作者信息
 
 - 刘圣林，[liushl123@126.com](mailto:liushl123@126.com)，怀化学院
-- 欧键，[oujian@rongcredit.cn](mailto:oujian@rongcredit.cn)，深圳融克迪特科技有限公司
+- 刘宇
+- 孙梦月
 
 ## 项目简介
 
